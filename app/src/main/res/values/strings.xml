@@ -1,0 +1,15 @@
+<resources>
+    <string-array name="activity_type_array">
+        <item>Work</item>
+        <item>Study</item>
+        <item>Leisure</item>
+        <item>Sport</item>
+    </string-array>
+    <string name="app_name">MyDiary</string>
+    <string name="diary_title_hint">Enter a title for the diary entry</string>
+    <string name="diary_title_label">Title</string>
+    <string name="diary_place">Place</string>
+    <string name="diary_comments">Comments</string>
+    <string name="new_diary">Log</string>
+    <string name="user_settings">Settings</string>
+</resources>
