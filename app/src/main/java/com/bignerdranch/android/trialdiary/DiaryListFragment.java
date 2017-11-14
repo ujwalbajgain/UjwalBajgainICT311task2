@@ -47,6 +47,10 @@ public class DiaryListFragment extends Fragment {
         updateUI();
     }
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+    }
+    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater){
         super.onCreateOptionsMenu(menu, inflater);
         inflater.inflate(R.menu.fragment_diary_list, menu);
@@ -62,6 +66,13 @@ public class DiaryListFragment extends Fragment {
                 Intent intent = DiaryPagerActivity
                         .newIntent(getActivity(), diary.getId());
                 startActivity(intent);
+                return true;
+            case R.id.user_settings:
+                Settings mSettings = DiaryLab.get(getActivity()).getSettings();
+
+                Intent settingsIntent = SettingsActivity
+                        .settings(getActivity(), mSettings.getId());
+                startActivity(settingsIntent);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -83,29 +94,29 @@ public class DiaryListFragment extends Fragment {
     private class DiaryHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         private TextView mTitleTextView;
         private TextView mDateTextView;
-       // private TextView mPlaceTextView;
+        private TextView mPlaceTextView;
         private Diary mDiary;
 
 
-        public DiaryHolder(LayoutInflater inflater, ViewGroup parent) {
-            super(inflater.inflate(R.layout.list_item_diary, parent, false));
+        public DiaryHolder(View itemView) {
+            super(itemView);
             itemView.setOnClickListener(this);
 
-            mTitleTextView = (TextView)itemView.findViewById(R.id.diary_title);
-            mDateTextView = (TextView) itemView.findViewById(R.id.diary_date);
-            //mPlaceTextView = (TextView) itemView.findViewById(R.id.diary_place);
+            mTitleTextView = (TextView)itemView.findViewById(R.id.diary_title_list);
+            mDateTextView = (TextView) itemView.findViewById(R.id.diary_date_list);
+            mPlaceTextView = (TextView) itemView.findViewById(R.id.diary_place_list);
 
         }
         private void bind(Diary diary){
             mDiary = diary;
             mTitleTextView.setText(mDiary.getTitle());
             mDateTextView.setText(mDiary.getDate().toString());
-        //    mPlaceTextView.setText(mDiary.getPlace().toString());
+            mPlaceTextView.setText(mDiary.getPlace());
 
         }
         @Override
-        public void onClick(View view){
-            Intent intent = DiaryPagerActivity.newIntent(getActivity(), mDiary.getId());
+        public void onClick(View v){
+            Intent intent = DiaryActivity.newIntent(getActivity(), mDiary.getId());
             startActivity(intent);
         }
     }
@@ -120,7 +131,8 @@ public class DiaryListFragment extends Fragment {
         @Override
         public DiaryHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
-            return new DiaryHolder(layoutInflater, parent);
+            View view = layoutInflater.inflate(R.layout.list_item_diary, parent, false);
+            return new DiaryHolder(view);
         }
 
         @Override

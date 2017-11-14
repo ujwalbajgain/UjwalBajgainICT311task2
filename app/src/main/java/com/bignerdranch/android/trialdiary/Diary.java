@@ -14,6 +14,11 @@ public class Diary
     public UUID getId() {
         return mId;
     }
+    private String mType;
+    public String getType() {
+        return mType;
+    }
+    public void setType(String type) { mType = type; }
 
     public void setId(UUID id) {
         mId = id;
@@ -40,18 +45,18 @@ public class Diary
     public void setDate(Date date) {
         mDate = date;
     }
-    public String getComment() {
-        return mComment;
+    public String getComments() {
+        return mComments;
      }
 
-    public void setComment(String comment){
-        mComment= comment;
+    public void setComments(String comments){
+        mComments= comments;
 
     }
 
     private String mTitle;
     private Date mDate;
-    private String mComment;
+    private String mComments;
     private String mPlace;
 
 
@@ -65,5 +70,8 @@ public class Diary
         mDate = new Date();
 
 
+    }
+    public String getPhotoFileName(){
+        return "IMG_" +getId().toString() + ".jpg";
     }
 }

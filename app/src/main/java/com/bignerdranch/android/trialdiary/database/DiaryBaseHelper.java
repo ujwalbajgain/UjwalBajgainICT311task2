@@ -5,6 +5,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import com.bignerdranch.android.trialdiary.database.DiaryDbSchema.DiaryTable;
+import com.bignerdranch.android.trialdiary.database.DiaryDbSchema.SettingsTable;
+
+import static com.bignerdranch.android.trialdiary.database.DiaryDbSchema.SettingsTable.*;
 
 /**
  * Created by ujwalbajgain on 6/10/17.
@@ -25,9 +28,22 @@ public class DiaryBaseHelper extends SQLiteOpenHelper {
         DiaryTable.Cols.UUID + ", "+
         DiaryTable.Cols.TITLE + ", " +
         DiaryTable.Cols.DATE + ", " +
-        DiaryTable.Cols.PLACE + ")"
-//        DiaryTable.Cols.COMMENT + ")"
+        DiaryTable.Cols.PLACE + ", " +
+        DiaryTable.Cols.COMMENTS +
+                        ")"
         );
+
+        db.execSQL("create table " + NAME + "(" +
+                Cols.ID + ", " +
+                Cols.NAME + ", " +
+                Cols.EMAIL + ", " +
+                Cols.GENDER + ", " +
+                Cols.COMMENT +
+                ")"
+        );
+
+        db.execSQL("insert into " + NAME + " values ('22222', 'Thungsuk Wangdu', 'wangdu@umail.com', '2' , 'No comments')");
+
 
     }
     @Override

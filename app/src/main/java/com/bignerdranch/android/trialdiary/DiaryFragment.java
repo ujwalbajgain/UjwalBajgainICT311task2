@@ -1,15 +1,29 @@
 package com.bignerdranch.android.trialdiary;
 
+import android.app.Activity;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.FileProvider;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.Spinner;
 
+import java.io.File;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -19,12 +33,21 @@ import java.util.UUID;
 public class DiaryFragment extends Fragment {
 
     private static final String ARG_DIARY_ID = "diary_id";
+    private static final int REQUEST_PHOTO = 2;
     private Diary mDiary;
     private EditText mTitleField;
     private Button mDateButton;
     private EditText mCommentField;
     private EditText mPlaceField;
-   ///private Spinner mSpinner;
+    private Spinner mTypeField;
+    private File mPhotoFile;
+    private ImageButton mPhotoButton;
+    private ImageView mPhotoView;
+
+    private ImageView mDeleteButton;
+    private ImageView mSaveButton;
+    private ImageView mCancelButton;
+
 
     public static DiaryFragment newInstance(UUID diaryId){
         Bundle args = new Bundle();
@@ -40,6 +63,7 @@ public class DiaryFragment extends Fragment {
         super.onCreate(savedInstanceState);
         UUID diaryId = (UUID) getArguments().getSerializable(ARG_DIARY_ID);
         mDiary = DiaryLab.get(getActivity()).getDiary(diaryId);
+        mPhotoFile = DiaryLab.get(getActivity()).getPhotoFile(mDiary);
 
     }
     @Override
@@ -52,15 +76,15 @@ public class DiaryFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState){
+                             Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_diary, container, false);
 
         mTitleField = (EditText) v.findViewById(R.id.diary_title);
         mTitleField.setText(mDiary.getTitle());
-        mTitleField.addTextChangedListener(new TextWatcher(){
+        mTitleField.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(
-                    CharSequence s, int start, int count, int after){
+                    CharSequence s, int start, int count, int after) {
 
             }
 
@@ -79,10 +103,10 @@ public class DiaryFragment extends Fragment {
 
         mPlaceField = (EditText) v.findViewById(R.id.diary_place);
         mPlaceField.setText(mDiary.getPlace());
-        mPlaceField.addTextChangedListener(new TextWatcher(){
+        mPlaceField.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(
-                    CharSequence s, int start, int count, int after){
+                    CharSequence s, int start, int count, int after) {
 
             }
 
@@ -98,8 +122,44 @@ public class DiaryFragment extends Fragment {
             }
         });
 
-        mCommentField = (EditText) v.findViewById(R.id.diary_comment);
-        mCommentField.setText(mDiary.getComment());
+        PackageManager packageManager = getActivity().getPackageManager();
+
+
+        mPhotoButton = (ImageButton) v.findViewById(R.id.diary_camera);
+//        PackageManager packageManager = getActivity().getPackageManager();
+        final Intent captureImage = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        boolean canTakePhoto = mPhotoFile != null &&
+                captureImage.resolveActivity(packageManager) != null;
+        mPhotoButton.setEnabled(canTakePhoto);
+
+        mPhotoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Uri uri = FileProvider.getUriForFile(getActivity(),
+                        "com.bignerdranch.android.trialdiary.FileProvider",
+                        mPhotoFile);
+                captureImage.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+
+                List<ResolveInfo> cameraActivities = getActivity()
+                        .getPackageManager().queryIntentActivities(captureImage, PackageManager.MATCH_DEFAULT_ONLY);
+
+
+                for(ResolveInfo activity : cameraActivities){
+                    getActivity().grantUriPermission(activity.activityInfo.packageName,
+                            uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                }
+                startActivityForResult(captureImage, REQUEST_PHOTO);
+            }
+        });
+
+        mPhotoView = (ImageView) v.findViewById(R.id.diary_photo);
+        updatePhotoView();
+
+
+
+
+        mCommentField = (EditText) v.findViewById(R.id.diary_comments);
+        mCommentField.setText(mDiary.getComments());
         mCommentField.addTextChangedListener(new TextWatcher(){
             @Override
             public void beforeTextChanged(
@@ -109,7 +169,7 @@ public class DiaryFragment extends Fragment {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-            mDiary.setComment(s.toString());
+            mDiary.setComments(s.toString());
 
         }
 
@@ -118,6 +178,43 @@ public class DiaryFragment extends Fragment {
 
         }
         });
+        mTypeField = (Spinner) v.findViewById(R.id.diary_type);
+        if (mDiary.getType() != null)
+            mTypeField.setSelection(Integer.parseInt(mDiary.getType()));
+
+        mTypeField.setOnItemSelectedListener(new DiaryTypeOnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view,
+                                       int pos, long id) {
+                mDiary.setType(Integer.toString(pos));
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+        mCancelButton= (ImageView) v.findViewById(R.id.diary_cancel);
+        mCancelButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DiaryLab.get(getActivity())
+                        .deleteDiary(mDiary);
+                getActivity().onBackPressed();
+            }
+        });
+
+        mSaveButton = (ImageView) v.findViewById(R.id.diary_save);
+        mSaveButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DiaryLab.get(getActivity())
+                        .updateDiary(mDiary);
+                getActivity().onBackPressed();
+            }
+        });
+
+
 
         /*Spinner mSpinner = (Spinner) findViewById(R.id.activity_type_spinner);
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
@@ -132,5 +229,31 @@ public class DiaryFragment extends Fragment {
 
         return v;
 
+    }
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode != Activity.RESULT_OK) {
+            return;
+        }
+        if (requestCode == REQUEST_PHOTO) {
+            Uri uri = FileProvider.getUriForFile(getActivity(),
+                    "com.bignerdranch.android.trialdiary.fileprovider",
+                    mPhotoFile);
+
+        getActivity().revokeUriPermission(uri,
+                Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
+        updatePhotoView();
+        }
+    }
+
+    private void updatePhotoView() {
+        if (mPhotoFile == null || !mPhotoFile.exists()) {
+            mPhotoView.setImageDrawable(null);
+        } else {
+            Bitmap bitmap = PictureUtils.getScaledBitmap(
+                    mPhotoFile.getPath(), getActivity());
+            mPhotoView.setImageBitmap(bitmap);
+        }
     }
 }
